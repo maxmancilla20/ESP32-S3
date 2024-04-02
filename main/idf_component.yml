@@ -1,5 +1,7 @@
 dependencies:
   espressif/coap:
     version: ^4.3.0
+  espressif/mdns:
+    version: ^1.0.0
 description: CoAP Server Example
 version: 1.0.0
