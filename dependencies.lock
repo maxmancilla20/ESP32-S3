@@ -11,11 +11,17 @@ dependencies:
       service_url: https://api.components.espressif.com/
       type: service
     version: 1.2.5
+  espressif/qrcode:
+    component_hash: 3b493771bc5d6ad30cbf87c25bf784aada8a08c941504355b55d6b75518ed7bc
+    source:
+      service_url: https://api.components.espressif.com/
+      type: service
+    version: 0.1.0~2
   idf:
     component_hash: null
     source:
       type: idf
     version: 5.2.0
-manifest_hash: f4d08f01f0c196b318c761e2e74a26b777f864eb9539b54c9616648a76cc8eef
+manifest_hash: 50d90aaeec6e8460f64fd1ec672d1c8c0017981cc3824b9eb4722389166120b1
 target: esp32s3
 version: 1.0.0
