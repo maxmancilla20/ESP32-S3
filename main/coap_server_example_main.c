@@ -30,6 +30,7 @@
 #include "protocol_examples_common.h"
 
 #include "coap3/coap.h"
+#include "mdns.h"
 
 #ifndef CONFIG_COAP_SERVER_SUPPORT
 #error COAP_SERVER_SUPPORT needs to be enabled
@@ -58,7 +59,7 @@
    by 'idf.py menuconfig' to reduce code size.
 */
 #define EXAMPLE_COAP_LOG_DEFAULT_LEVEL CONFIG_COAP_LOG_DEFAULT_LEVEL
-
+#define EXAMPLE_MDNS_INSTANCE "Fire_Monitor"
 const static char *TAG = "CoAP_server";
 
 static char espressif_data[100];
@@ -894,6 +895,62 @@ clean_up:
     vTaskDelete(NULL);
 }
 
+static char *generate_hostname(void)
+{
+    char   *hostname;
+    if (-1 == asprintf(&hostname, "Fire_Monitor")) {
+        abort();
+    }
+    return hostname;
+}
+
+static void initialise_mdns(void)
+{
+    char *hostname = generate_hostname();
+
+    //initialize mDNS
+    ESP_ERROR_CHECK( mdns_init() );
+    //set mDNS hostname (required if you want to advertise services)
+    ESP_ERROR_CHECK( mdns_hostname_set(hostname) );
+    ESP_LOGI(TAG, "mdns hostname set to: [%s]", hostname);
+    //set default mDNS instance name
+    ESP_ERROR_CHECK( mdns_instance_name_set(EXAMPLE_MDNS_INSTANCE) );
+
+    //structure with TXT records
+    mdns_txt_item_t serviceTxtData[3] = {
+        {"board", "esp32"},
+        {"u", "user"},
+        {"p", "password"}
+    };
+
+    //initialize service
+    ESP_ERROR_CHECK( mdns_service_add("Fire_Monitor", "_coap", "_udp", 80, serviceTxtData, 3) );
+
+#if CONFIG_MDNS_MULTIPLE_INSTANCE
+    ESP_ERROR_CHECK( mdns_service_add("ESP32-WebServer1", "_http", "_tcp", 80, NULL, 0) );
+#endif
+
+#if CONFIG_MDNS_PUBLISH_DELEGATE_HOST
+    char *delegated_hostname;
+    if (-1 == asprintf(&delegated_hostname, "%s-delegated", hostname)) {
+        abort();
+    }
+
+    mdns_ip_addr_t addr4, addr6;
+    esp_netif_str_to_ip4("10.0.0.1", &addr4.addr.u_addr.ip4);
+    addr4.addr.type = ESP_IPADDR_TYPE_V4;
+    esp_netif_str_to_ip6("fd11:22::1", &addr6.addr.u_addr.ip6);
+    addr6.addr.type = ESP_IPADDR_TYPE_V6;
+    addr4.next = &addr6;
+    addr6.next = NULL;
+    ESP_ERROR_CHECK( mdns_delegate_hostname_add(delegated_hostname, &addr4) );
+    ESP_ERROR_CHECK( mdns_service_add_for_host("test0", "_http", "_tcp", delegated_hostname, 1234, serviceTxtData, 3) );
+    free(delegated_hostname);
+#endif // CONFIG_MDNS_PUBLISH_DELEGATE_HOST
+
+    free(hostname);
+}
+
 void app_main(void)
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -906,5 +963,6 @@ void app_main(void)
      */
     ESP_ERROR_CHECK(example_connect());
 
+    initialise_mdns();
     xTaskCreate(coap_example_server, "coap", 8 * 1024, NULL, 5, NULL);
 }
