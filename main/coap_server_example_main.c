@@ -63,6 +63,28 @@ const static char *TAG = "CoAP_server";
 
 static char espressif_data[100];
 static int espressif_data_len = 0;
+#define INITIAL_DATA "Me llego algo xd"
+
+/*Data Storages*/
+static char alarm_data[6];
+static int alarm_data_len = 0;
+#define ALARM_INITIAL_DATA "GOODS"/*ALARM*/
+
+static char image_data[6];
+static int image_data_len = 0;
+#define IMAGE_INITIAL_DATA "CALMS"/*PANIC*/
+
+static char temp_data[3];
+static int temp_data_len = 0;
+#define TEMP_INITIAL_DATA "27"/*70*/
+
+static char hum_data[3];
+static int hum_data_len = 0;
+#define HUM_INITIAL_DATA "70"/*20*/
+
+static char manual_data[2];
+static int manual_data_len = 0;
+#define MANUAL_INITIAL_DATA "0"/*1*/
 
 #ifdef CONFIG_COAP_MBEDTLS_PKI
 /* CA cert, taken from coap_ca.pem
@@ -90,8 +112,6 @@ extern uint8_t oscore_conf_start[] asm("_binary_coap_oscore_conf_start");
 extern uint8_t oscore_conf_end[]   asm("_binary_coap_oscore_conf_end");
 #endif /* CONFIG_COAP_OSCORE_SUPPORT */
 
-#define INITIAL_DATA "Hello World!"
-
 /*
  * The resource handler
  */
@@ -108,6 +128,16 @@ hnd_espressif_get(coap_resource_t *resource,
                                  (size_t)espressif_data_len,
                                  (const u_char *)espressif_data,
                                  NULL, NULL);
+    if(strcmp (espressif_data, "hola") == 0)
+    {
+        ESP_LOGE(TAG, "dije hola");
+    }
+    else
+    {
+        ESP_LOGE(TAG, "adios");
+        //ESP_LOGE( espressif_data);
+        ESP_LOGI(TAG, "La cadena es: %s", espressif_data);
+    }
 }
 
 static void
@@ -154,6 +184,316 @@ hnd_espressif_delete(coap_resource_t *resource,
     espressif_data_len = strlen(espressif_data);
     coap_pdu_set_code(response, COAP_RESPONSE_CODE_DELETED);
 }
+/*=========================ALARM=========================================*/
+static void
+hnd_alarm_put(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    size_t size;
+    size_t offset;
+    size_t total;
+    const unsigned char *data;
+
+    coap_resource_notify_observers(resource, NULL);
+
+    if (strcmp (alarm_data, ALARM_INITIAL_DATA) == 0) {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CREATED);
+    } else {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
+    }
+
+    /* coap_get_data_large() sets size to 0 on error */
+    (void)coap_get_data_large(request, &size, &data, &offset, &total);
+
+    if (size == 0) {      /* re-init */
+        snprintf(alarm_data, sizeof(alarm_data), ALARM_INITIAL_DATA);
+        alarm_data_len = strlen(alarm_data);
+    } else {
+        alarm_data_len = size > sizeof (alarm_data) ? sizeof (alarm_data) : size;
+        memcpy (alarm_data, data, alarm_data_len);
+    }
+}
+
+static void
+hnd_alarm_get(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    coap_add_data_large_response(resource, session, request, response,
+                                 query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
+                                 (size_t)alarm_data_len,
+                                 (const u_char *)alarm_data,
+                                 NULL, NULL);
+}
+
+static void
+hnd_alarm_delete(coap_resource_t *resource,
+                     coap_session_t *session,
+                     const coap_pdu_t *request,
+                     const coap_string_t *query,
+                     coap_pdu_t *response)
+{
+    coap_resource_notify_observers(resource, NULL);
+    snprintf(alarm_data, sizeof(alarm_data), ALARM_INITIAL_DATA);
+    alarm_data_len = strlen(alarm_data);
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_DELETED);
+}
+/*===============================================================================*/
+
+/*===============================IMAGE===========================================*/
+static void
+hnd_image_put(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    size_t size;
+    size_t offset;
+    size_t total;
+    const unsigned char *data;
+
+    coap_resource_notify_observers(resource, NULL);
+
+    if (strcmp (image_data, IMAGE_INITIAL_DATA) == 0) {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CREATED);
+    } else {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
+    }
+
+    /* coap_get_data_large() sets size to 0 on error */
+    (void)coap_get_data_large(request, &size, &data, &offset, &total);
+
+    if (size == 0) {      /* re-init */
+        snprintf(image_data, sizeof(image_data), IMAGE_INITIAL_DATA);
+        image_data_len = strlen(image_data);
+    } else {
+        image_data_len = size > sizeof (image_data) ? sizeof (image_data) : size;
+        memcpy (image_data, data, image_data_len);
+    }
+}
+
+static void
+hnd_image_get(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    coap_add_data_large_response(resource, session, request, response,
+                                 query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
+                                 (size_t)image_data_len,
+                                 (const u_char *)image_data,
+                                 NULL, NULL);
+}
+
+static void
+hnd_image_delete(coap_resource_t *resource,
+                     coap_session_t *session,
+                     const coap_pdu_t *request,
+                     const coap_string_t *query,
+                     coap_pdu_t *response)
+{
+    coap_resource_notify_observers(resource, NULL);
+    snprintf(image_data, sizeof(image_data), IMAGE_INITIAL_DATA);
+    image_data_len = strlen(image_data);
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_DELETED);
+}
+/*================================================================================*/
+
+/*=========================TEMP=========================================*/
+static void
+hnd_temp_put(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    size_t size;
+    size_t offset;
+    size_t total;
+    const unsigned char *data;
+
+    coap_resource_notify_observers(resource, NULL);
+
+    if (strcmp (temp_data, TEMP_INITIAL_DATA) == 0) {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CREATED);
+    } else {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
+    }
+
+    /* coap_get_data_large() sets size to 0 on error */
+    (void)coap_get_data_large(request, &size, &data, &offset, &total);
+
+    if (size == 0) {      /* re-init */
+        snprintf(temp_data, sizeof(temp_data), TEMP_INITIAL_DATA);
+        temp_data_len = strlen(temp_data);
+    } else {
+        temp_data_len = size > sizeof (temp_data) ? sizeof (temp_data) : size;
+        memcpy (temp_data, data, temp_data_len);
+    }
+}
+
+static void
+hnd_temp_get(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    coap_add_data_large_response(resource, session, request, response,
+                                 query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
+                                 (size_t)temp_data_len,
+                                 (const u_char *)temp_data,
+                                 NULL, NULL);
+}
+
+static void
+hnd_temp_delete(coap_resource_t *resource,
+                     coap_session_t *session,
+                     const coap_pdu_t *request,
+                     const coap_string_t *query,
+                     coap_pdu_t *response)
+{
+    coap_resource_notify_observers(resource, NULL);
+    snprintf(temp_data, sizeof(temp_data), TEMP_INITIAL_DATA);
+    temp_data_len = strlen(temp_data);
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_DELETED);
+}
+/*===============================================================================*/
+
+/*=========================HUM=========================================*/
+static void
+hnd_hum_put(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    size_t size;
+    size_t offset;
+    size_t total;
+    const unsigned char *data;
+
+    coap_resource_notify_observers(resource, NULL);
+
+    if (strcmp (hum_data, HUM_INITIAL_DATA) == 0) {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CREATED);
+    } else {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
+    }
+
+    /* coap_get_data_large() sets size to 0 on error */
+    (void)coap_get_data_large(request, &size, &data, &offset, &total);
+
+    if (size == 0) {      /* re-init */
+        snprintf(hum_data, sizeof(hum_data), HUM_INITIAL_DATA);
+        hum_data_len = strlen(hum_data);
+    } else {
+        hum_data_len = size > sizeof (hum_data) ? sizeof (hum_data) : size;
+        memcpy (hum_data, data, hum_data_len);
+    }
+}
+
+static void
+hnd_hum_get(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    coap_add_data_large_response(resource, session, request, response,
+                                 query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
+                                 (size_t)hum_data_len,
+                                 (const u_char *)hum_data,
+                                 NULL, NULL);
+}
+
+static void
+hnd_hum_delete(coap_resource_t *resource,
+                     coap_session_t *session,
+                     const coap_pdu_t *request,
+                     const coap_string_t *query,
+                     coap_pdu_t *response)
+{
+    coap_resource_notify_observers(resource, NULL);
+    snprintf(hum_data, sizeof(hum_data), HUM_INITIAL_DATA);
+    hum_data_len = strlen(hum_data);
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_DELETED);
+}
+/*===============================================================================*/
+
+/*=========================MANUAL=========================================*/
+static void
+hnd_manual_put(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    size_t size;
+    size_t offset;
+    size_t total;
+    const unsigned char *data;
+
+    coap_resource_notify_observers(resource, NULL);
+
+    if (strcmp (manual_data, MANUAL_INITIAL_DATA) == 0) {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CREATED);
+    } else {
+        coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
+    }
+
+    /* coap_get_data_large() sets size to 0 on error */
+    (void)coap_get_data_large(request, &size, &data, &offset, &total);
+
+    if (size == 0) {      /* re-init */
+        snprintf(manual_data, sizeof(manual_data), MANUAL_INITIAL_DATA);
+        manual_data_len = strlen(manual_data);
+    } else {
+        manual_data_len = size > sizeof (manual_data) ? sizeof (manual_data) : size;
+        memcpy (manual_data, data, manual_data_len);
+    }
+}
+
+static void
+hnd_manual_get(coap_resource_t *resource,
+                  coap_session_t *session,
+                  const coap_pdu_t *request,
+                  const coap_string_t *query,
+                  coap_pdu_t *response)
+{
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    coap_add_data_large_response(resource, session, request, response,
+                                 query, COAP_MEDIATYPE_TEXT_PLAIN, 60, 0,
+                                 (size_t)manual_data_len,
+                                 (const u_char *)manual_data,
+                                 NULL, NULL);
+}
+
+static void
+hnd_manual_delete(coap_resource_t *resource,
+                     coap_session_t *session,
+                     const coap_pdu_t *request,
+                     const coap_string_t *query,
+                     coap_pdu_t *response)
+{
+    coap_resource_notify_observers(resource, NULL);
+    snprintf(manual_data, sizeof(manual_data), MANUAL_INITIAL_DATA);
+    manual_data_len = strlen(manual_data);
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_DELETED);
+}
+/*===============================================================================*/
+
 
 #ifdef CONFIG_COAP_OSCORE_SUPPORT
 static void
@@ -210,6 +550,14 @@ static void coap_example_server(void *p)
 {
     coap_context_t *ctx = NULL;
     coap_resource_t *resource = NULL;
+    /*===================================INIT RESOURCES======================================*/
+    coap_resource_t *alarm_resource = NULL;
+    coap_resource_t *image_resource = NULL;
+    coap_resource_t *temp_resource = NULL;
+    coap_resource_t *hum_resource = NULL;
+    coap_resource_t *manual_resource = NULL;
+    /*====================================================================================== */
+
     int have_ep = 0;
     uint16_t u_s_port = atoi(CONFIG_EXAMPLE_COAP_LISTEN_PORT);
 #ifdef CONFIG_EXAMPLE_COAPS_LISTEN_PORT
@@ -240,6 +588,23 @@ static void coap_example_server(void *p)
 
     snprintf(espressif_data, sizeof(espressif_data), INITIAL_DATA);
     espressif_data_len = strlen(espressif_data);
+
+    /*==============================INITIALIZE VARIABLES=======================================*/
+    snprintf(alarm_data, sizeof(alarm_data), ALARM_INITIAL_DATA);
+    alarm_data_len = strlen(alarm_data);
+
+    snprintf(image_data, sizeof(image_data), IMAGE_INITIAL_DATA);
+    image_data_len = strlen(image_data);
+
+    snprintf(temp_data, sizeof(temp_data), TEMP_INITIAL_DATA);
+    temp_data_len = strlen(temp_data);
+
+    snprintf(hum_data, sizeof(hum_data), HUM_INITIAL_DATA);
+    hum_data_len = strlen(hum_data);
+
+    snprintf(manual_data, sizeof(manual_data), MANUAL_INITIAL_DATA);
+    manual_data_len = strlen(manual_data);
+    /*========================================================================================*/
     coap_set_log_handler(coap_log_handler);
     coap_set_log_level(EXAMPLE_COAP_LOG_DEFAULT_LEVEL);
 
@@ -368,6 +733,7 @@ static void coap_example_server(void *p)
             goto clean_up;
         }
 
+        /*Creation of Espressif---------------------------------------------------*/
         resource = coap_resource_init(coap_make_str_const("Espressif"), 0);
         if (!resource) {
             ESP_LOGE(TAG, "coap_resource_init() failed");
@@ -379,6 +745,78 @@ static void coap_example_server(void *p)
         /* We possibly want to Observe the GETs */
         coap_resource_set_get_observable(resource, 1);
         coap_add_resource(ctx, resource);
+
+        /*==================================ALARM========================================*/
+        alarm_resource = coap_resource_init(coap_make_str_const("max/alarm"), 0);
+        if (!alarm_resource) {
+            ESP_LOGE(TAG, "coap_resource_init() failed");
+            goto clean_up;
+        }
+        coap_register_handler(alarm_resource, COAP_REQUEST_GET, hnd_alarm_get);
+        coap_register_handler(alarm_resource, COAP_REQUEST_PUT, hnd_alarm_put);
+        coap_register_handler(alarm_resource, COAP_REQUEST_DELETE, hnd_alarm_delete);
+        /* We possibly want to Observe the GETs */
+        coap_resource_set_get_observable(alarm_resource, 1);
+        coap_add_resource(ctx, alarm_resource);
+        /*==============================================================================*/
+
+        /*==================================IMAGE=======================================*/
+        image_resource = coap_resource_init(coap_make_str_const("max/image"), 0);
+        if (!image_resource) {
+            ESP_LOGE(TAG, "coap_resource_init() failed");
+            goto clean_up;
+        }
+        coap_register_handler(image_resource, COAP_REQUEST_GET, hnd_image_get);
+        coap_register_handler(image_resource, COAP_REQUEST_PUT, hnd_image_put);
+        coap_register_handler(image_resource, COAP_REQUEST_DELETE, hnd_image_delete);
+        /* We possibly want to Observe the GETs */
+        coap_resource_set_get_observable(image_resource, 1);
+        coap_add_resource(ctx, image_resource);
+        /*==============================================================================*/
+
+        /*==================================TEMP========================================*/
+        temp_resource = coap_resource_init(coap_make_str_const("max/temp"), 0);
+        if (!temp_resource) {
+            ESP_LOGE(TAG, "coap_resource_init() failed");
+            goto clean_up;
+        }
+        coap_register_handler(temp_resource, COAP_REQUEST_GET, hnd_temp_get);
+        coap_register_handler(temp_resource, COAP_REQUEST_PUT, hnd_temp_put);
+        coap_register_handler(temp_resource, COAP_REQUEST_DELETE, hnd_temp_delete);
+        /* We possibly want to Observe the GETs */
+        coap_resource_set_get_observable(temp_resource, 1);
+        coap_add_resource(ctx, temp_resource);
+        /*==============================================================================*/
+
+        /*==================================HUM========================================*/
+        hum_resource = coap_resource_init(coap_make_str_const("max/hum"), 0);
+        if (!hum_resource) {
+            ESP_LOGE(TAG, "coap_resource_init() failed");
+            goto clean_up;
+        }
+        coap_register_handler(hum_resource, COAP_REQUEST_GET, hnd_hum_get);
+        coap_register_handler(hum_resource, COAP_REQUEST_PUT, hnd_hum_put);
+        coap_register_handler(hum_resource, COAP_REQUEST_DELETE, hnd_hum_delete);
+        /* We possibly want to Observe the GETs */
+        coap_resource_set_get_observable(hum_resource, 1);
+        coap_add_resource(ctx, hum_resource);
+        /*==============================================================================*/
+
+        /*==================================MANUAL======================================*/
+        manual_resource = coap_resource_init(coap_make_str_const("max/manual"), 0);
+        if (!manual_resource) {
+            ESP_LOGE(TAG, "coap_resource_init() failed");
+            goto clean_up;
+        }
+        coap_register_handler(manual_resource, COAP_REQUEST_GET, hnd_manual_get);
+        coap_register_handler(manual_resource, COAP_REQUEST_PUT, hnd_manual_put);
+        coap_register_handler(manual_resource, COAP_REQUEST_DELETE, hnd_manual_delete);
+        /* We possibly want to Observe the GETs */
+        coap_resource_set_get_observable(manual_resource, 1);
+        coap_add_resource(ctx, manual_resource);
+        /*=============================================================================*/
+
+        /*------------------------------------------------------------------------*/
 #ifdef CONFIG_COAP_OSCORE_SUPPORT
         resource = coap_resource_init(coap_make_str_const("oscore"), COAP_RESOURCE_FLAGS_OSCORE_ONLY);
         if (!resource) {
