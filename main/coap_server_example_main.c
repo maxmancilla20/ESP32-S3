@@ -545,6 +545,29 @@ coap_log_handler (coap_log_t level, const char *message)
         ESP_LOG_LEVEL(esp_level, TAG, "%s", message);
     }
 }
+static void FireAlarmMonitoring(void *p)
+{
+    while(1)
+    {
+        if (strcmp(manual_data, "1") == 0)
+        {
+            ESP_LOGE(TAG, "ALARM! FIRE!!");
+            ESP_LOGI(TAG, "La imagen es: %s", image_data);
+        }
+        else if(strcmp(temp_data, "70") == 0 && strcmp(hum_data, "20") == 0)
+        {
+            ESP_LOGE(TAG, "ALARM! FIRE!!");
+            ESP_LOGI(TAG, "La imagen es: %s", image_data);
+        }
+        else
+        {
+            ESP_LOGE(TAG, "All in calmm :))");
+            ESP_LOGI(TAG, "La imagen es: %s", image_data);
+        }
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
+
+}
 
 static void coap_example_server(void *p)
 {
@@ -845,6 +868,9 @@ static void coap_example_server(void *p)
 
         wait_ms = COAP_RESOURCE_CHECK_TIME * 1000;
 
+        /*Create Application*/
+        xTaskCreate(FireAlarmMonitoring, "FireAlarm", 8 * 1024, NULL, 5, NULL);
+
         while (1) {
             int result = coap_io_process(ctx, wait_ms);
             if (result < 0) {
@@ -862,6 +888,8 @@ static void coap_example_server(void *p)
 clean_up:
     coap_free_context(ctx);
     coap_cleanup();
+
+
 
     vTaskDelete(NULL);
 }
