@@ -1,0 +1,3 @@
+menu "Example configuration"
+    rsource "../esp-idf-lib/devtools/Kconfig.i2c"
+endmenu

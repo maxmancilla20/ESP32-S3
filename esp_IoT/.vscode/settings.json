@@ -15,5 +15,6 @@
     "--query-driver=**",
     "--compile-commands-dir=d:\\Sandboxes\\esp\\esp-iot\\ESP32-S3\\esp_IoT\\build"
   ],
-  "idf.flashType": "UART"
+  "idf.flashType": "UART",
+  "C_Cpp.errorSquiggles": "disabled"
 }
