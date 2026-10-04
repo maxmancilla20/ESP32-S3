@@ -4,7 +4,6 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "COM6",
   "idf.currentSetup": "C:\\esp\\v5.5.3\\esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
@@ -16,5 +15,6 @@
     "--compile-commands-dir=d:\\Sandboxes\\esp\\esp-iot\\ESP32-S3\\esp_IoT\\build"
   ],
   "idf.flashType": "UART",
-  "C_Cpp.errorSquiggles": "disabled"
+  "C_Cpp.errorSquiggles": "disabled",
+  "idf.port": "COM6"
 }
