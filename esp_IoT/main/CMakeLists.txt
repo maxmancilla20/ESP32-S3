@@ -1,4 +1,3 @@
-idf_component_register(SRCS "main.c" "bms180_sensor.c" "rgb_led.c"
+idf_component_register(SRCS "main.c"
                     INCLUDE_DIRS "."
-                    REQUIRES bmp180 i2cdev esp_idf_lib_helpers led_strip)
-
+                    REQUIRES bmp180 buzzer dht ir_nec oled_display rgb_led st7735_display)

@@ -3,12 +3,10 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(EXTRA_COMPONENT_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/components
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/esp-idf-lib/components/i2cdev
     ${CMAKE_CURRENT_SOURCE_DIR}/esp-idf-lib/components/esp_idf_lib_helpers
-    ${CMAKE_CURRENT_SOURCE_DIR}/esp-idf-lib/components/led_strip
-    ${CMAKE_CURRENT_SOURCE_DIR}/esp-idf-lib/components/color
-    ${CMAKE_CURRENT_SOURCE_DIR}/esp-idf-lib/components/lib8tion
+    ${CMAKE_CURRENT_SOURCE_DIR}/esp-idf-lib/components/dht
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
