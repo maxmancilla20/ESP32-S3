@@ -1,27 +1,3 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2015 Frank Bargstedt
- * Copyright (c) 2018 Ruslan V. Uss <unclerus@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 /**
  * @file bmp180.h
  * @defgroup bmp180 bmp180
@@ -42,6 +18,7 @@
 #include <stdbool.h>
 #include <i2cdev.h>
 #include <esp_err.h>
+#include <stdint.h>
 
 #define BMP180_DEVICE_ADDRESS 0x77 //!< I2C address
 
@@ -70,6 +47,12 @@ typedef struct
     int16_t  MC;
     int16_t  MD;
 } bmp180_dev_t;
+
+typedef struct {
+    float temperature_c;
+    uint32_t pressure_pa;
+    float altitude_m;
+} bmp180_data_t;
 
 /**
  * Hardware accuracy mode.
@@ -121,6 +104,19 @@ esp_err_t bmp180_init(bmp180_dev_t *dev);
  * @return `ESP_OK` on success
  */
 esp_err_t bmp180_measure(bmp180_dev_t *dev, float *temperature, uint32_t *pressure, bmp180_mode_t oss);
+
+/**
+ * @brief Initialize the application BMP180 sensor instance.
+ *
+ * Uses the SDA/SCL pins configured by CONFIG_EXAMPLE_I2C_MASTER_SDA and
+ * CONFIG_EXAMPLE_I2C_MASTER_SCL.
+ */
+esp_err_t bmp180_init_sensor(void);
+
+/**
+ * @brief Read temperature, pressure, and estimated altitude.
+ */
+esp_err_t bmp180_read(bmp180_data_t *data);
 
 #ifdef __cplusplus
 }

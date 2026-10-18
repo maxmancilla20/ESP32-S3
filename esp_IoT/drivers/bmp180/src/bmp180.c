@@ -1,27 +1,3 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2015 Frank Bargstedt
- * Copyright (c) 2018 Ruslan V. Uss <unclerus@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 /**
  * @file bmp180.c
  *
@@ -36,6 +12,8 @@
  */
 #include "bmp180.h"
 #include <inttypes.h>
+#include <math.h>
+#include <string.h>
 #include <esp_err.h>
 #include <esp_log.h>
 #include <ets_sys.h>
@@ -69,6 +47,17 @@ static const char *TAG = "bmp180";
 
 #define CHECK(x) do { esp_err_t __; if ((__ = x) != ESP_OK) return __; } while (0)
 #define CHECK_ARG(VAL) do { if (!(VAL)) return ESP_ERR_INVALID_ARG; } while (0)
+
+#define REFERENCE_PRESSURE_PA 102560.0f
+
+static bmp180_dev_t g_bmp180;
+static bool g_bmp180_initialized;
+
+static float bmp180_pressure_to_altitude(uint32_t pressure_pa)
+{
+    return 44330.0f * (1.0f - powf((float)pressure_pa / REFERENCE_PRESSURE_PA,
+                                    1.0f / 5.255f));
+}
 
 static esp_err_t bmp180_read_reg_16(i2c_dev_t *dev, uint8_t reg, int16_t *r)
 {
@@ -259,5 +248,57 @@ esp_err_t bmp180_measure(bmp180_dev_t *dev, float *temperature, uint32_t *pressu
 
     I2C_DEV_GIVE_MUTEX(&dev->i2c_dev);
 
+    return ESP_OK;
+}
+
+esp_err_t bmp180_init_sensor(void)
+{
+    if (g_bmp180_initialized) {
+        return ESP_OK;
+    }
+
+    esp_err_t result = i2cdev_init();
+    if (result != ESP_OK) {
+        return result;
+    }
+
+    memset(&g_bmp180, 0, sizeof(g_bmp180));
+    result = bmp180_init_desc(&g_bmp180, I2C_NUM_0,
+                              CONFIG_EXAMPLE_I2C_MASTER_SDA,
+                              CONFIG_EXAMPLE_I2C_MASTER_SCL);
+    if (result != ESP_OK) {
+        return result;
+    }
+
+    result = bmp180_init(&g_bmp180);
+    if (result != ESP_OK) {
+        esp_err_t cleanup_result = bmp180_free_desc(&g_bmp180);
+        if (cleanup_result != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to release descriptor after initialization error: %s",
+                     esp_err_to_name(cleanup_result));
+        }
+        return result;
+    }
+
+    g_bmp180_initialized = true;
+    return ESP_OK;
+}
+
+esp_err_t bmp180_read(bmp180_data_t *data)
+{
+    CHECK_ARG(data);
+
+    esp_err_t result = bmp180_init_sensor();
+    if (result != ESP_OK) {
+        return result;
+    }
+
+    result = bmp180_measure(&g_bmp180, &data->temperature_c, &data->pressure_pa,
+                            BMP180_MODE_STANDARD);
+    if (result != ESP_OK) {
+        return result;
+    }
+
+    data->altitude_m = bmp180_pressure_to_altitude(data->pressure_pa);
     return ESP_OK;
 }
